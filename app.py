@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 import sqlite3
 
 app = Flask(__name__)
@@ -21,7 +21,7 @@ init_db()
 
 @app.route('/')
 def index():
-    return 'Bem vindo(a) a Livros Vai na Web!'
+    return render_template('index.html')  # 'Bem vindo(a) a Livros Vai na Web!'
     # return render_template
 
 
@@ -66,6 +66,25 @@ def listar_livros():
         livros_formatados.append(dicionario_livros)
 
     return jsonify(livros_formatados)
+
+
+@app.route('/livros/<int:livro_id>', methods=['DELETE'])
+def deletar_livro(livro_id):
+    # Conecta ao banco de dados e cria um cursor para executar comandos SQL.
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        # Executa a exclusão do livro com o ID especificado.
+        cursor.execute("DELETE FROM livros WHERE id = ?", (livro_id,))
+        # Confirma a transação para salvar as mudanças.
+        conn.commit()
+
+    # Verifica se algum registro foi afetado (se o livro foi encontrado e excluído).
+    if cursor.rowcount == 0:
+        # Retorna um erro 400 (Bad Request) se o livro não foi encontrado.
+        return jsonify({"erro": "Livro não encontrado"}), 400
+
+    # Retorna uma mensagem de sucesso com o código 200 (OK).
+    return jsonify({"menssagem": "Livro excluído com sucesso"}), 200
 
 
 if __name__ == '__main__':
